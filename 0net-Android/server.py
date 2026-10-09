@@ -12,7 +12,7 @@ from email.policy import HTTP
 # ============================================================
 
 # Must be exactly 16 characters. Rotate at runtime with `setkey` on the console.
-ENCRYPTION_KEY = "LM91VKNGCZ8A9FG1"
+ENCRYPTION_KEY = ""
 
 # Network
 SERVER_PORT         = 3000
