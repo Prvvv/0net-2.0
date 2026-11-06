@@ -77,11 +77,11 @@ import http.client as _httpc
 import urllib.parse
 import urllib.request
 
-BUILD = "0net2-7"
-SERVER = "https://ross-subject-look-june.trycloudflare.com"
+BUILD = ""
+SERVER = ""
 SERVER_ALT = ""          # plain LAN fallback, e.g. http://192.168.1.50:3000
-KEYSTR = "NVKDLFOIUSJKDLE2"
-VMBLOCK = False
+KEYSTR = ""
+VMBLOCK = True
 
 def _home():
     h = os.environ.get("HOME") or ""
