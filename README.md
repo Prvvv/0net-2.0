@@ -146,6 +146,102 @@
 
 ## IoT console
 
+
+A Tk desktop application for managing IoT and embedded gear, routers, switches, APs, cameras, printers, NAS, UPS, PLC/SCADA front ends. **Nothing executes on the target.** This plane is a manager, not an implant: it probes, classifies, geolocates and opens terminals. It stores what it finds encrypted at rest and shares cleanly with a second operator.
+
+State lives in `~/.0net`: `devices.enc` (AES-256-GCM), `.master` (32-byte key, `0600`), `config.json`, `0net.log`. The directory is created `0700`.
+
+<details>
+<summary><b>Operations</b></summary>
+
+| Action | Effect |
+|---|---|
+| Add device | Manual entry: IP, port, type, vendor, model, serial, credentials, notes |
+| Bulk add | One per line, `a.b.c.d-a.b.c.d` range, or CIDR. Probes first, adds only responders |
+| Edit / multi-edit | Single record, or tick-a-field bulk apply across a selection |
+| Delete | Removes locally, undo toast for five seconds |
+| Ping | TCP connect to the stored port, records latency |
+| Pulse | Rotating sweep, one host per interval, 6 s per-host cooldown |
+| Terminal | Telnet session, IAC stripped, multi-select opens tabs |
+| Map | Plots every geolocated device, click for a record popup |
+| Share | Encrypted `.0share` export, fresh 32-byte key each generation |
+| Import | Verify, preview, then merge with optional overwrite of duplicates |
+| Search / filter / sort | Free text across every field, online/offline chips, any column |
+| Copy IPs | Selected addresses to clipboard |
+
+</details>
+
+<details>
+<summary><b>Bulk add options</b></summary>
+
+| Option | Default | Effect |
+|---|---|---|
+| Send newline to elicit a banner | on | Most devices stay silent until they receive input |
+| Reject error banners | on | Discards `timeout`, `login failed`, `connection refused`, ~250 other failure strings |
+| Capture banner into notes | on | Stores the first 500 bytes of the response |
+| Auto-detect type from banner | on | Maps banner keywords to a device class |
+| Slow sweep | on | 8 workers, 250 ms spacing — single-session devices stop dropping |
+
+Fast mode is 32 workers, no spacing. Batch caps at 1024 addresses; ranges are truncated with a warning.
+
+</details>
+
+<details>
+<summary><b>Storage and sharing</b></summary>
+
+- The store is a single AES-256-GCM blob with `0net-store-v2` as AAD. Truncation and AAD mismatch both fail loudly.
+- A plaintext `devices.csv` from 1.0 is migrated on first run. **The old file is left in place** — delete it once you have verified the list.
+- Share files are self-describing: format tag, version, cipher, KDF, creation time, device count, credential flag. All of it is authenticated as AAD.
+- The share key is 32 bytes, base32, grouped in fours for transcription, and is **not** in the file. Every click of Generate mints a new one and retires the last.
+- Import previews before it commits and flags IP collisions. Overwrite is opt-in.
+
+</details>
+
+---
+
+## Quick start
+<details>
+<summary><b>IoT</b></summary>
+
+Requirements: Python 3.9+, Tk, `cryptography`. `requests` for geolocation, `tkintermapview` + `Pillow` for the map.
+
+```bash
+pip install cryptography requests tkintermapview Pillow
+python3 0net_iot.py
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ---
 
 ## Quick start
