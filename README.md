@@ -104,8 +104,6 @@
 ---
 ## Operator console
 
-<img src="https://i.ibb.co/k6wkLM1G/windows.png">
-
 <details>
 <summary><b>Linux / Windows server</b></summary>
 
@@ -125,6 +123,8 @@
 | `setkey <key>` | Rotate the fleet key |
 | `updateserver <url>` | Push a new server URL |
 | `config` / `log` / `loot` / `clear` | Local inspection |
+
+<img src="https://i.ibb.co/k6wkLM1G/windows.png">
 
 </details>
 
