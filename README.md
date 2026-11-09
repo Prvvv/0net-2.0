@@ -256,48 +256,9 @@ The builder installs JDK 17 and the Android SDK into `/jdk17` and `/android-sdk`
 - Background location is granted via a redirect to the app settings page on Android 11+, not a dialog. Grant it manually.
 - `remove` sends an uninstall intent, so the operator still has to tap through the confirmation.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </details>
 
 ## Detection & OPSEC
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Per-platform posture. The honest version: every plane has meaningful hardening and every plane leaks.
 
