@@ -142,6 +142,9 @@
 | `remove <id>` | **Destructive.** Block and self-destruct |
 | `config` / `clear` | Local inspection |
 
+
+<img src="https://i.ibb.co/yFt0KWZ1/android.png">
+
 </details>
 
 ---
