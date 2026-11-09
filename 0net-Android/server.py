@@ -801,7 +801,7 @@ def print_banner():
     print(panel_top())
     print(panel_blank())
     print(panel_center("0NET Android", C.BOLD + C.BWHITE + "0NET" + C.RESET + " " + C.WHITE + "Android" + C.RESET))
-    print(panel_center("v2.5", C.DIM + "v2.5" + C.RESET))
+    print(panel_center("", C.DIM + "" + C.RESET))
     print(panel_blank())
     print(panel_bottom())
     print()
