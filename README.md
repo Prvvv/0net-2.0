@@ -45,44 +45,6 @@
 
 ## Protocol
 
-
-<details>
-<summary><b>Wire format, auth and crypto</b></summary>
-
-**Transport.** 
-
-**Endpoints.** 
-
-**Derivation.** 
-
-**Payload.** 
-
-**Auth.** 
-
-**Enrollment.**
-
-**Rotation.**
-
-**Identity.** 
-
-**Replay surface.** 
-
-</details>
-
-<details>
-<summary><b>Request and response examples</b></summary>
-
-
-</details>
-
-<details>
-<summary><b>Key material</b></summary>
-
-
-
-
-</details>
-
 ---
 
 ## Capabilities
