@@ -146,6 +146,7 @@
 
 ## IoT console (0net-IoT)
 
+<img src="https://i.ibb.co/Q765Mx2t/iot.png">
 
 A Tk desktop application for managing IoT and embedded gear, routers, switches, APs, cameras, printers, NAS, UPS, PLC/SCADA front ends. **Nothing executes on the target.** This plane is a manager, not an implant: it probes, classifies, geolocates and opens terminals. It stores what it finds encrypted at rest and shares cleanly with a second operator.
 
