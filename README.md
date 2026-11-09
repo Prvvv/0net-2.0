@@ -214,40 +214,6 @@ Requirements: Python 3.9+, Tk, `cryptography`. `requests` for geolocation, `tkin
 ```bash
 pip install cryptography requests tkintermapview Pillow
 python3 0net_iot.py
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ---
 
 ## Quick start
