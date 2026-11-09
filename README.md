@@ -356,8 +356,6 @@ The builder installs JDK 17 and the Android SDK into `/jdk17` and `/android-sdk`
 
 ## Detection & OPSEC
 
-Per-platform posture. The honest version: every plane has meaningful hardening and every plane leaks.
-
 <details>
 <summary><b>Windows</b></summary>
 
