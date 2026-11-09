@@ -29,10 +29,6 @@
 
 ## Architecture
 
-
-
-**Component matrix**
-
 | | Windows | Linux | Android |
 |---|---|---|---|
 | Language | PowerShell + cmd.exe | Python 3 | Kotlin |
