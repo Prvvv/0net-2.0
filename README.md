@@ -42,6 +42,13 @@
 
 ---
 
+
+
+
+
+
+
+
 ## Capabilities
 
 <details>
@@ -95,10 +102,9 @@
 </details>
 
 ---
-
-
-
 ## Operator console
+
+<img src="https://i.ibb.co/k6wkLM1G/windows.png">
 
 <details>
 <summary><b>Linux / Windows server</b></summary>
