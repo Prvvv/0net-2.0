@@ -191,7 +191,7 @@ Fast mode is 32 workers, no spacing. Batch caps at 1024 addresses; ranges are tr
 <summary><b>Storage and sharing</b></summary>
 
 - The store is a single AES-256-GCM blob with `0net-store-v2` as AAD. Truncation and AAD mismatch both fail loudly.
-- A plaintext `devices.csv` from 1.0 is migrated on first run. **The old file is left in place** — delete it once you have verified the list.
+- A plaintext `devices.csv` from 1.0 is migrated on first run. **The old file is left in place**, delete it once you have verified the list.
 - Share files are self-describing: format tag, version, cipher, KDF, creation time, device count, credential flag. All of it is authenticated as AAD.
 - The share key is 32 bytes, base32, grouped in fours for transcription, and is **not** in the file. Every click of Generate mints a new one and retires the last.
 - Import previews before it commits and flags IP collisions. Overwrite is opt-in.
