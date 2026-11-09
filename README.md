@@ -206,17 +206,9 @@ Fast mode is 32 workers, no spacing. Batch caps at 1024 addresses; ranges are tr
 ---
 
 ## Quick start
-<details>
-<summary><b>IoT</b></summary>
 
-Requirements: Python 3.9+, Tk, `cryptography`. `requests` for geolocation, `tkintermapview` + `Pillow` for the map.
 
-```bash
-pip install cryptography requests tkintermapview Pillow
-python3 0net_iot.py
----
 
-## Quick start
 <details>
 <summary><b>Linux</b></summary>
 
@@ -324,6 +316,44 @@ The builder installs JDK 17 and the Android SDK into `/jdk17` and `/android-sdk`
 - `remove` sends an uninstall intent, so the operator still has to tap through the confirmation.
 
 </details>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Detection & OPSEC
 
