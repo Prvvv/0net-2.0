@@ -156,7 +156,7 @@ All encrypted, diagrams etc...
 
 <img src="https://i.ibb.co/Q765Mx2t/iot.png">
 
-A Tk desktop application for managing IoT and embedded gear, routers, switches, APs, cameras, printers, NAS, UPS, PLC/SCADA front ends. **Nothing executes on the target.** This plane is a manager, not an implant: it probes, classifies, geolocates and opens terminals. It stores what it finds encrypted at rest and shares cleanly with a second operator.
+A Tk desktop application for managing IoT and embedded gear, routers, switches, APs, cameras, printers, NAS, UPS, PLC/SCADA front ends. This plane probes, classifies, geolocates and opens terminals. It stores what it finds encrypted at rest and shares cleanly with a second operator to enable the user to further track, exploit and build upon IoT devices.
 
 State lives in `~/.0net`: `devices.enc` (AES-256-GCM), `.master` (32-byte key, `0600`), `config.json`, `0net.log`. The directory is created `0700`.
 
