@@ -101,36 +101,7 @@
 
 ---
 
-## Persistence & evasion
 
-<details>
-<summary><b>Linux</b></summary>
-
-
-Paths: 
-
-</details>
-
-<details>
-<summary><b>Windows</b></summary>
-
-
-Paths: 
-
-</details>
-
-<details>
-<summary><b>Android</b></summary>
-
-
-</details>
-
-<details>
-<summary><b>VM guard (Windows / Linux)</b></summary>
-
-</details>
-
----
 
 ## Operator console
 
