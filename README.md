@@ -40,8 +40,6 @@
 
 ## Protocol
 
-Four planes share the design language and full end to end encryption:
-
 | Plane | Transport | Cipher suite | Device identity |
 |---|---|---|---|
 | Windows | HTTP/1.1 via tunnel | HKDF-SHA256 → AES-128-CBC + HMAC-SHA256 | Fingerprint hash + per-device secret |
@@ -63,8 +61,6 @@ Four planes share the design language and full end to end encryption:
 
 ### Key schedule
 
-Each secret is expanded once into three purpose-bound keys. The secret is never used directly.
-
 ```
     secret ──► HKDF-Extract (salt "0net2") ──► PRK
                                                 │
@@ -85,8 +81,6 @@ The IV is inside the MAC's coverage, so it is authenticated too. A body with a s
 ---
 
 ### Message anatomy
-
-Every request carries a fixed header set:
 
 ```http
 GET / HTTP/1.1
@@ -189,8 +183,6 @@ Files are split into 256 KB chunks, each independently encrypted and signed, and
 
 ### Android divergence
 
-The Android plane is a slightly separate protocol:
-
 | | Windows / Linux | Android |
 |---|---|---|
 | Key derivation | HKDF-SHA256, three purpose-bound keys | raw 16-byte UTF-8 key, no KDF |
@@ -209,15 +201,6 @@ Android runs `AES/CBC/NoPadding` with zero padding and keeps a fallback server l
 The IoT tool is not a beacon and it is an inventory and access plane. It speaks TCP connect-and-read for classification, telnet for terminals, and keeps its own state in AES-256-GCM at rest with `0net-store-v2` as AAD. `.0share` exports are AES-256-GCM with a fresh 32-byte base32 key per generation, and the entire metadata block (format tag, version, cipher, KDF, creation time, count, credential flag) is authenticated as AAD, so a tampered header fails before a single row is read so the key is never in the file.
 
 ---
-
-
-
-
-
-
-
-
-
 
 ## Capabilities
 
