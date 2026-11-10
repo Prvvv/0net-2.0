@@ -588,7 +588,6 @@ The builder installs JDK 17 and the Android SDK into `/jdk17` and `/android-sdk`
 
 **Anti-detection**
 - Battery-optimisation exemption and exact-alarm access are requested up front so doze does not silently starve the poll.
-- No VM guard — an emulator is treated as a real device.
 
 </details>
 
