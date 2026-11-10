@@ -133,8 +133,6 @@ no secret held
 
 **Steady state.** An enrolled device authenticates on its secret only. `X-Key-Mode: global` is rejected unless the source address matches the address the device last authenticated from. That address pin is the whole resync control: a stolen fleet key alone cannot hijack an enrolled ID, because the attacker would have to also source from the victim's address.
 
-**Replay.** Nonces are single-use in an ordered cache, TTL 30 days, 1.5M entries, pruned every 30 s. A repeat is a 403. Because the timestamp is advisory, the cache — not the clock — is the actual defence, and it holds for 30 days rather than a five-minute window.
-
 **Identity.** The device ID is a 24-bit truncation of a SHA-256 over a canonical fingerprint string, recomputed server-side from the `User-Agent` on every poll. A mismatch between claimed and computed ID is a 403. `MID` is a per-install salt- so Windows hashes `COMPUTERNAME|USERNAME|SID`, Linux hashes `hostname|user|uid|random` — so two clones of one image do not collide onto a single command queue. The User-Agent is frozen into config on first run so a resolution change or reboot cannot move the ID.
 
 ---
@@ -157,27 +155,23 @@ no secret held
 
 ### Command channel
 
-`GET /` is a single request/response. The client polls on a 3 s interval with up to 800 ms of jitter, backs off exponentially to 60 s on failure, and batches up to eight queued commands per cycle.
-
-Delivery is resolved by a three-tier queue device ID, then source IP, then `*` for broadcast. Broadcast entries are *peeked and marked* rather than popped, so one `*` item reaches the whole fleet instead of being consumed by whoever polls first. Queues cap at 512 entries and 120 s TTL.
-
-Every command is suffixed `(ID-XXXXXX)` with a six-character uppercase alphanumeric ID. The client dedupes on a 2000-entry in-memory set, so a re-delivery inside the TTL is harmless.
+`GET /` is a single request/response so the client polls on a 3 s interval with up to 800 ms of jitter batches up to eight commands per cycle.
+Every command is suffixed `(ID-XXXXXX)` with a six-character uppercase alphanumeric ID.
 
 ---
 
 ### Upload channel
 
-Files are split into 256 KB chunks, each independently encrypted and signed, and reassembled server-side only when all indices are present. Scratch directories are keyed `tid_cid` because a broadcast screenshot hands every implant the same transaction ID and `tid` alone would have them overwrite each other's parts.
-
+Files are split into 256 KB chunks, each independently encrypted and signed, and reassembled server-side only when all indices are present. 
 `MAX_BODY` is 16 MB per request, `MAX_CONN` is a 256-permit semaphore, handler timeout 20 s, rate limit 400 req/s per IP and 4000 req/s globally.
 
 ---
 
 ### Rotation
 
-`setkey <new>` retains the previous fleet key for `KEY_GRACE_SEC` (1800 s), then retires it. The `updatekey` broadcast is pre-encrypted once with the outgoing key and re-served from that cache for the whole grace window, so every implant gets the new key even if it polls near the end. Enrolled devices keep using their own secret throughout so rotation only touches the bootstrap path.
+`setkey <new>` retains the previous fleet key for `KEY_GRACE_SEC` (1800 s), then retires it. The `updatekey` broadcast is pre-encrypted once with the outgoing key and re-served from that cache for the whole grace window, so every implant gets the new key even if it polls near the end. Enrolled devices keep using their own secret throughout rotation.
 
-`updateserver <url>` pushes a new endpoint the same way. Both are self-healing: an implant that misses the window simply fails to authenticate and falls back to its resync path.
+`updateserver <url>` pushes a new endpoint the same way.
 
 ---
 
