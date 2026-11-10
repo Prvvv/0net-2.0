@@ -40,7 +40,174 @@
 
 ## Protocol
 
-All encrypted, diagrams etc...
+Four planes share the design language and full end to end encryption:
+
+| Plane | Transport | Cipher suite | Device identity |
+|---|---|---|---|
+| Windows | HTTP/1.1 via tunnel | HKDF-SHA256 → AES-128-CBC + HMAC-SHA256 | Fingerprint hash + per-device secret |
+| Linux | HTTP/1.1 via tunnel | HKDF-SHA256 → AES-128-CBC + HMAC-SHA256 | Fingerprint hash + per-device secret |
+| Android | HTTP/1.1 direct | SHA-256 token + AES-128-CBC (zero IV) | Static 24-bit fingerprint, no secret |
+| IoT | Raw TCP connect + telnet | Local AES-256-GCM store, AES-256-GCM `.0share` | n/a (inventory tool) |
+
+---
+
+### Design principles
+
+1. **Nothing plaintext leaves the host** so command, output, report, filename and telemetry payload are all encrypted before they are framed.
+2. **Everything is authenticated before decryption** so signatures are verified over the hex ciphertext and checked before the body reaches the cipher. A forged or bit-flipped body never touches the padding oracle.
+3. **Per-device key are not a shared** so the fleet key bootstraps; the device secret does the work. One captured implant does not decrypt another.
+4. **An advisory clock is used** so timestamps are logged and skew-warned but never enforced, so a frozen VM, a restored snapshot or a clock-less embedded host cannot lock itself out. Replay defence is the nonce cache.
+5. **Degraded mitigation.** Transport failures back off exponentially; a missing crypto backend falls back to pure Python so a missing screenshot tool falls through nine alternatives.
+
+---
+
+### Key schedule
+
+Each secret is expanded once into three purpose-bound keys. The secret is never used directly.
+
+```
+    secret ──► HKDF-Extract (salt "0net2") ──► PRK
+                                                │
+              ┌─────────────────────────────────┼─────────────────────────────────┐
+              ▼                                 ▼                                 ▼
+   HMAC(PRK, "aes" ‖ 0x01)[:16]     HMAC(PRK, "mac" ‖ 0x01)[:32]     HMAC(PRK, "auth" ‖ 0x01)[:32]
+          AES-128 key                     body signature                    auth token
+```
+
+| Purpose | Construction |
+|---|---|
+| Body confidentiality | AES-128-CBC, PKCS#7, random 16-byte IV prefixed to the ciphertext |
+| Body integrity | HMAC-SHA256 over the **hex-encoded IV‖ciphertext** |
+| Request authentication | HMAC-SHA256 over `"<epoch_ms>:<nonce>"` |
+
+The IV is inside the MAC's coverage, so it is authenticated too. A body with a substituted IV fails signature verification rather than decrypting to garbage.
+
+---
+
+### Message anatomy
+
+Every request carries a fixed header set:
+
+```http
+GET / HTTP/1.1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) ... Chrome/124.0.0.0 Safari/537.36 SCR:1920x1080 PLAT:linux DISTRO:debian MID:9C3F11AE
+X-Timestamp: 1762731854123
+X-Nonce: 8f2a1c9d4b7e6035a1d8c2f490be7713
+X-Auth-Token: 3d9c…                        # HMAC(kdf_auth(secret), "ts:nonce")
+X-Client-ID: 4E1A9C                       # sha256(fingerprint)[:6], uppercase
+X-Key-Mode: secret                        # secret | global
+X-Platform: linux
+Connection: close
+```
+
+Authenticated POSTs add `X-Signature` over the body. Responses add `X-Signature`, `X-Key-Mode`, and `X-Enroll` when a secret is being minted.
+
+The ciphertext is hex and survives shell quoting, `cmd.exe` redirects and PowerShell string handling without escaping rules, at the cost of 2× overhead.
+
+---
+
+### Lifecycle
+
+```
+no secret held
+        │
+        │ poll · fleet key
+        ▼
+  server mints a secret  ──►  403 + X-Enroll
+        │
+        │ secret saved to config
+        ▼
+  ┌──────────────────────────────────┐
+  │  every poll from here uses the   │
+  │  device's own secret             │
+  └────────────────┬─────────────────┘
+                   │
+        ┌──────────┴──────────┐
+      valid                stale
+        │                    │
+        ▼                    ▼
+  200 + command      one retry · fleet key
+                             │
+                  ┌──────────┴──────────┐
+              same IP              new IP
+                  │                    │
+                  ▼                    ▼
+          new secret issued    403 · operator revokes
+```
+
+**Enrollment.** The first poll carries no secret. The server mints `secrets.token_hex(16)`, stores it against the device ID, and returns it in `X-Enroll` with a 403. Up to eight secrets are retained per device so a rotation overlap does not orphan a host.
+
+**Steady state.** An enrolled device authenticates on its secret only. `X-Key-Mode: global` is rejected unless the source address matches the address the device last authenticated from. That address pin is the whole resync control: a stolen fleet key alone cannot hijack an enrolled ID, because the attacker would have to also source from the victim's address.
+
+**Replay.** Nonces are single-use in an ordered cache, TTL 30 days, 1.5M entries, pruned every 30 s. A repeat is a 403. Because the timestamp is advisory, the cache — not the clock — is the actual defence, and it holds for 30 days rather than a five-minute window.
+
+**Identity.** The device ID is a 24-bit truncation of a SHA-256 over a canonical fingerprint string, recomputed server-side from the `User-Agent` on every poll. A mismatch between claimed and computed ID is a 403. `MID` is a per-install salt- so Windows hashes `COMPUTERNAME|USERNAME|SID`, Linux hashes `hostname|user|uid|random` — so two clones of one image do not collide onto a single command queue. The User-Agent is frozen into config on first run so a resolution change or reboot cannot move the ID.
+
+---
+
+### Endpoints
+
+| Method | Path | Body | Direction |
+|---|---|---|---|
+| `GET` | `/` | — | Server → implant (command) |
+| `POST` | `/result` | `cmd_id \n command \n output` | Implant → server |
+| `POST` | `/info` | `cmd_id \n report` | Implant → server |
+| `POST` | `/upload` | base64 chunk, `X-Tid` / `X-Idx` / `X-Total` / `X-Name` | Implant → server |
+| `POST` | `/telemetry` | encrypted JSON | Android → server |
+| `POST` | `/data` | encrypted JSON envelope | Android → server |
+| `POST` | `/shellstream` | encrypted stream chunk | Android → server |
+
+`/info` and `/result` are only accepted from an ID that is live or enrolled. Reports land in `reports/<id>/<date>.log`; uploads reassemble from `_uploads/<tid>_<cid>/<idx>.part` into `loot/`.
+
+---
+
+### Command channel
+
+`GET /` is a single request/response. The client polls on a 3 s interval with up to 800 ms of jitter, backs off exponentially to 60 s on failure, and batches up to eight queued commands per cycle.
+
+Delivery is resolved by a three-tier queue device ID, then source IP, then `*` for broadcast. Broadcast entries are *peeked and marked* rather than popped, so one `*` item reaches the whole fleet instead of being consumed by whoever polls first. Queues cap at 512 entries and 120 s TTL.
+
+Every command is suffixed `(ID-XXXXXX)` with a six-character uppercase alphanumeric ID. The client dedupes on a 2000-entry in-memory set, so a re-delivery inside the TTL is harmless.
+
+---
+
+### Upload channel
+
+Files are split into 256 KB chunks, each independently encrypted and signed, and reassembled server-side only when all indices are present. Scratch directories are keyed `tid_cid` because a broadcast screenshot hands every implant the same transaction ID and `tid` alone would have them overwrite each other's parts.
+
+`MAX_BODY` is 16 MB per request, `MAX_CONN` is a 256-permit semaphore, handler timeout 20 s, rate limit 400 req/s per IP and 4000 req/s globally.
+
+---
+
+### Rotation
+
+`setkey <new>` retains the previous fleet key for `KEY_GRACE_SEC` (1800 s), then retires it. The `updatekey` broadcast is pre-encrypted once with the outgoing key and re-served from that cache for the whole grace window, so every implant gets the new key even if it polls near the end. Enrolled devices keep using their own secret throughout so rotation only touches the bootstrap path.
+
+`updateserver <url>` pushes a new endpoint the same way. Both are self-healing: an implant that misses the window simply fails to authenticate and falls back to its resync path.
+
+---
+
+### Android divergence
+
+The Android plane is a slightly separate protocol:
+
+| | Windows / Linux | Android |
+|---|---|---|
+| Key derivation | HKDF-SHA256, three purpose-bound keys | raw 16-byte UTF-8 key, no KDF |
+| IV | random per message, authenticated | fixed all-zero, unauthenticated |
+| Token | HMAC-SHA256 | bare `SHA-256("ts:key")` |
+| Replay defence | single-use nonce, 30 d | none — 300 s timestamp window |
+| Body signature | yes | no |
+| Per-device secret | yes | no |
+
+Android runs `AES/CBC/NoPadding` with zero padding and keeps a fallback server list (`fallback <urls>`) so a primary going dark does not strand the device.
+
+---
+
+### IoT plane
+
+The IoT tool is not a beacon and it is an inventory and access plane. It speaks TCP connect-and-read for classification, telnet for terminals, and keeps its own state in AES-256-GCM at rest with `0net-store-v2` as AAD. `.0share` exports are AES-256-GCM with a fresh 32-byte base32 key per generation, and the entire metadata block (format tag, version, cipher, KDF, creation time, count, credential flag) is authenticated as AAD, so a tampered header fails before a single row is read so the key is never in the file.
+
 ---
 
 
