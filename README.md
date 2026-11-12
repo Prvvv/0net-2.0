@@ -133,7 +133,7 @@ no secret held
 
 **Steady state.** An enrolled device authenticates on its secret only. `X-Key-Mode: global` is rejected unless the source address matches the address the device last authenticated from. That address pin is the whole resync control: a stolen fleet key alone cannot hijack an enrolled ID, because the attacker would have to also source from the victim's address.
 
-**Identity.** The device ID is a 24-bit truncation of a SHA-256 over a canonical fingerprint string, recomputed server-side from the `User-Agent` on every poll. A mismatch between claimed and computed ID is a 403. `MID` is a per-install salt- so Windows hashes `COMPUTERNAME|USERNAME|SID`, Linux hashes `hostname|user|uid|random` — so two clones of one image do not collide onto a single command queue. The User-Agent is frozen into config on first run so a resolution change or reboot cannot move the ID.
+**Identity.** The device ID is a 24-bit truncation of a SHA-256 over a canonical fingerprint string, recomputed server-side from the `User-Agent` on every poll. A mismatch between claimed and computed ID is a 403. `MID` is a per-install salt- so Windows hashes `COMPUTERNAME|USERNAME|SID`, Linux hashes `hostname|user|uid|random` so two clones of one image do not collide onto a single command queue. The User-Agent is frozen into config on first run so a resolution change or reboot cannot move the ID.
 
 ---
 
