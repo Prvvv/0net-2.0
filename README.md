@@ -182,7 +182,7 @@ Files are split into 256 KB chunks, each independently encrypted and signed, and
 | Key derivation | HKDF-SHA256, three purpose-bound keys | raw 16-byte UTF-8 key, no KDF |
 | IV | random per message, authenticated | fixed all-zero, unauthenticated |
 | Token | HMAC-SHA256 | bare `SHA-256("ts:key")` |
-| Replay defence | single-use nonce, 30 d | none — 300 s timestamp window |
+| Replay defence | single-use nonce, 30 d | 300 s timestamp window |
 | Body signature | yes | no |
 | Per-device secret | yes | no |
 
