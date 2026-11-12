@@ -19,7 +19,7 @@
 
 0net 2.0 is a ground-up rewrite of 0net, a proof-of-concept C2 framework. [Version 1.0](https://github.com/Prvvv/0net) the server wrote `pico-wifi.txt` (named after the [Raspberry Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/)'s Wi-Fi module) results were appended to `responses.txt`, and commands were encrypted with a Vigenère cipher.
 
-2.0 replaces the file drop with an actual protocol and the cipher. Four implants share one design language across Windows, Linux, Android and embedded IoT: a compact encrypted beacon, per-device enrollment, and an operator console that streams results live.
+2.0 replaces the file drop with an actual protocol and the cipher. Four implants share one design language across Windows, Linux, Android and embedded IoT: a compact encrypted beacon, per-device enrollment, and an operator console that streams results live from a 1 click payload across all systems.
 
 ---
 
