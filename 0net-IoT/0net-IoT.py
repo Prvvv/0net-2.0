@@ -36,7 +36,7 @@ try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     from cryptography.fernet import Fernet
 except ImportError:
-    print("This needs the 'cryptography' package: pip install cryptography")
+    print("This needs the 'cryptography' package: cryptography")
     sys.exit(1)
 
 
