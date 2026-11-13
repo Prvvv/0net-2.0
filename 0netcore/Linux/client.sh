@@ -620,13 +620,6 @@ def rd(path):
     except Exception:
         return ""
 
-# --- identity ---
-# canonical string, byte identical to generate_device_fingerprint_id() on the
-# server. the UA is built once and frozen into config so a reboot can't change
-# it. MID carries a random per-install salt: two clones of the same image have
-# the same hostname, user and uid, so without it they hash to the same id and
-# share one command queue.
-
 SCREEN_RE = re.compile(r'SCR:(\d+)x(\d+)')
 MID_RE = re.compile(r'MID:([0-9A-Fa-f]{6,16})')
 PLATFORM_RE = re.compile(r'PLAT:([A-Za-z0-9.-]{1,24})')
@@ -1088,10 +1081,6 @@ def get_info():
     for a in apps[:20]:
         L.append("App : " + a)
     return "\n".join(L)
-
-# --- command runner ---
-# output goes to a file, not a pipe: a spawned gui app inherits the handle and a
-# pipe would block until it exits.
 
 def run_cmd(line):
     global CWD
