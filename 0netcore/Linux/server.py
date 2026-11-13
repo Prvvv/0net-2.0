@@ -350,7 +350,7 @@ def auth_token(ts, nonce, secret):
 
 # --- config ---
 
-SERVER_ENCRYPTION_KEY_STR = "NVKDLFOIUSJKDLE2"
+SERVER_ENCRYPTION_KEY_STR = ""
 OLD_ENCRYPTION_KEY_STR = ""
 
 SERVER_PORT = 3000
@@ -721,7 +721,7 @@ def enqueue_all(text, cid=None):
     return enqueue("*", text, cid)
 
 def take_pending(did, ip):
-    # peeked, not popped - the "*" queue is shared by the whole fleet
+    
     now = time.time()
     with pending_lock:
         seen = delivered.setdefault(did, set())
@@ -829,8 +829,6 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         secs = self._secrets(did) if did else []
         ip_ok = self._ip_ok(did, ip) if did else True
 
-        # an enrolled device is only let in on its secret. the fleet key is
-        # bootstrap-only, plus a resync path pinned to the last authed address.
         cands = []
         if secs:
             if mode == "secret":
@@ -901,8 +899,6 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
                 say("!", C.YEL, f"403 fingerprint mismatch claimed={claimed} computed={did}")
                 return
 
-            # two boxes cloned from one image used to collide here and share a
-            # queue. the client now salts its MID, so a mismatch means a real clash.
             with clients_lock:
                 prev = clients.get(did, {}).get("ua")
             if prev and prev != ua:
@@ -1569,8 +1565,7 @@ def print_banner():
     print()
 
 def make_server():
-    # cloudflared dials ::1 or 127.0.0.1 depending on how localhost resolves.
-    # a v6 socket with V6ONLY=0 answers both.
+    
     addr = SERVER_BIND_ADDRESS.strip()
     if addr in ("", "*", "0.0.0.0", "::"):
         try:
